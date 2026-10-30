@@ -58,9 +58,9 @@ function showDashboard(user) {
   $("#report-to").value = todayLocal();
   $("#history-from").value = monthStart();
   $("#history-to").value = todayLocal();
-  loadCourses().then(() => {
-    loadStudents();
-    loadReport();
+  loadCourses().then(async () => {
+    await Promise.all([loadStudents(), loadHistoryStudentOptions()]);
+    await loadReport();
   }).catch((error) => alert(error.message));
   navigate("overview");
 }
@@ -155,29 +155,32 @@ async function loadAttendance() {
   const data = await api(`/api/attendance?courseId=${encodeURIComponent(courseId)}&date=${encodeURIComponent(date)}&jornada=${encodeURIComponent(jornada)}`);
   state.attendanceStudents = data.students;
   renderAttendance();
-  const alreadyRegistered = state.attendanceStudents.some((student) => student.asistencia);
-  message($("#attendance-message"), alreadyRegistered
-    ? "Ya hay registros para esta fecha. No se pueden volver a guardar."
-    : "Marcá el estado de cada estudiante y guardá el registro.", alreadyRegistered);
-  $("#save-attendance").disabled = alreadyRegistered || !state.attendanceStudents.length;
+  const registered = state.attendanceStudents.filter((student) => student.asistencia).length;
+  const pending = state.attendanceStudents.length - registered;
+  message($("#attendance-message"), registered && pending
+    ? `Ya existen ${registered} registros; podés completar los ${pending} pendientes.`
+    : registered
+      ? "La asistencia de este curso, fecha y jornada ya está completa."
+      : "Marcá el estado de cada estudiante y guardá el registro.", registered > 0);
+  $("#save-attendance").disabled = pending === 0;
 }
 function renderAttendance() {
   $("#attendance-count").textContent = `${state.attendanceStudents.length} estudiantes`;
   $("#attendance-table").innerHTML = state.attendanceStudents.length ? state.attendanceStudents.map((student) => `
-    <tr data-student-row="${student.id_estudiante}">
+    <tr data-student-row="${student.id_estudiante}" data-recorded="${student.asistencia ? "true" : "false"}">
       <td>${escapeHTML(student.apellido)}, ${escapeHTML(student.nombre)}</td>
       <td>${escapeHTML(student.dni)}</td>
-      <td><select class="status-select" data-status>
+      <td><select class="status-select" data-status ${student.asistencia ? "disabled" : ""}>
         <option value="P" ${student.asistencia === "P" ? "selected" : ""}>P · Presente</option>
         <option value="A" ${student.asistencia === "A" ? "selected" : ""}>A · Ausente</option>
         <option value="T" ${student.asistencia === "T" ? "selected" : ""}>T · Tardanza</option>
         <option value="AJ" ${student.asistencia === "AJ" ? "selected" : ""}>AJ · Ausente justificado</option>
       </select></td>
-      <td><input class="observation-input" data-observation maxlength="255" placeholder="Opcional" value="${escapeHTML(student.observacion || "")}"></td>
+      <td><input class="observation-input" data-observation maxlength="255" placeholder="Opcional" ${student.asistencia ? "disabled" : ""} value="${escapeHTML(student.observacion || "")}"></td>
     </tr>`).join("") : '<tr><td colspan="4" class="empty-cell">Este curso no tiene estudiantes activos.</td></tr>';
 }
 async function saveAttendance() {
-  const rows = $$("#attendance-table [data-student-row]");
+  const rows = $("#attendance-table [data-student-row]").filter((row) => row.dataset.recorded !== "true");
   if (!rows.length) return;
   const records = rows.map((row) => ({
     studentId: Number(row.dataset.studentRow),
@@ -226,9 +229,19 @@ async function loadReport() {
     </div>`).join("") : '<p class="empty-note">Sin ausencias registradas para este período.</p>';
   $("#overview-export").href = `/api/reports/export.csv?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 }
+async function loadHistoryStudentOptions() {
+  const data = await api("/api/students");
+  const select = $("#history-student");
+  const previous = select.value;
+  select.innerHTML = '<option value="">Todos</option>' + data.students.map((student) =>
+    `<option value="${student.id_estudiante}">${escapeHTML(student.apellido + ", " + student.nombre + " · " + student.dni)}</option>`
+  ).join("");
+  if (previous && [...select.options].some((option) => option.value === previous)) select.value = previous;
+}
 async function loadHistory() {
   const params = new URLSearchParams();
   if ($("#history-course").value) params.set("courseId", $("#history-course").value);
+  if ($("#history-student").value) params.set("studentId", $("#history-student").value);
   if ($("#history-from").value) params.set("from", $("#history-from").value);
   if ($("#history-to").value) params.set("to", $("#history-to").value);
   const data = await api(`/api/attendance/history?${params}`);

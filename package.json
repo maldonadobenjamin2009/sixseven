@@ -5,7 +5,7 @@
   "description": "Sistema web de gestión de asistencia escolar",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "npm run db:init && node server.js",
     "dev": "node --watch server.js",
     "db:init": "node scripts/init-db.js",
     "admin:create": "node scripts/create-admin.js"
