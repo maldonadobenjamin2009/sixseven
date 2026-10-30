@@ -2,6 +2,15 @@
 
 Sistema web de gestión de asistencia para 1.º, 2.º y 3.º año. Está desarrollado con HTML5, CSS3, JavaScript, Node.js, Express y PostgreSQL, tal como solicita el Trabajo Práctico Final Integrador.
 
+## Documentación del proyecto
+
+- [Análisis del problema y requerimientos](docs/analisis.md)
+- [Diagramas de casos de uso y entidad-relación](docs/diagramas.md)
+- [Manual de usuario](docs/manual-usuario.md)
+- [Manual técnico de instalación](docs/manual-tecnico.md)
+- [Pruebas y evidencias](docs/pruebas.md)
+- [Guion para la presentación oral](docs/presentacion.md)
+
 ## Funcionalidades implementadas
 
 - Inicio y cierre de sesión con contraseñas almacenadas mediante bcrypt y sesiones guardadas en PostgreSQL.
