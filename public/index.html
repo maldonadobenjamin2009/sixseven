@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172554">
+  <meta name="description" content="Sistema de gestión de asistencia escolar SixSeven">
+  <title>SixSeven | Asistencia escolar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/app.js" defer></script>
+</head>
+<body>
+  <div id="login-view" class="login-layout">
+    <section class="login-panel">
+      <div class="brand brand-login">
+        <div class="brand-mark">7</div>
+        <div><strong>sixseven</strong><span>GESTIÓN ESCOLAR</span></div>
+      </div>
+      <div class="login-copy">
+        <p class="eyebrow">IPET · SISTEMA DE ASISTENCIA</p>
+        <h1>La asistencia,<br><em>en orden.</em></h1>
+        <p>Una forma simple de registrar, consultar y hacer seguimiento de cada curso.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label for="login-username">Usuario</label>
+        <input id="login-username" name="username" autocomplete="username" required maxlength="50" placeholder="Tu usuario">
+        <label for="login-password">Contraseña</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña">
+        <p id="login-error" class="form-error" role="alert"></p>
+        <button class="button button-primary button-full" type="submit">Ingresar <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="login-foot">Acceso exclusivo para personal autorizado.</p>
+    </section>
+    <aside class="login-aside">
+      <div class="aside-orbit orbit-one"></div><div class="aside-orbit orbit-two"></div>
+      <div class="aside-content">
+        <span class="aside-tag">CICLO LECTIVO 2026</span>
+        <div class="aside-numbers"><strong>01</strong><span>—</span><strong>03</strong></div>
+        <h2>Seguimiento claro.<br>Información a mano.</h2>
+        <p>Administrá cursos, estudiantes y jornadas desde un solo lugar.</p>
+      </div>
+      <div class="aside-bottom"><span>01 / 03 · ORGANIZACIÓN</span><span>SixSeven © 2026</span></div>
+    </aside>
+  </div>
+
+  <div id="dashboard-view" class="app-layout hidden">
+    <aside class="sidebar">
+      <a class="brand sidebar-brand" href="#" aria-label="SixSeven inicio">
+        <div class="brand-mark">7</div>
+        <div><strong>sixseven</strong><span>GESTIÓN ESCOLAR</span></div>
+      </a>
+      <div class="side-label">PRINCIPAL</div>
+      <nav class="main-nav" aria-label="Navegación principal">
+        <button class="nav-link active" data-view="overview"><span class="nav-icon">◫</span>Resumen</button>
+        <button class="nav-link" data-view="attendance"><span class="nav-icon">✓</span>Tomar asistencia</button>
+        <button class="nav-link" data-view="students"><span class="nav-icon">♙</span>Estudiantes</button>
+        <button class="nav-link" data-view="history"><span class="nav-icon">◷</span>Historial</button>
+        <button class="nav-link" data-view="courses"><span class="nav-icon">▦</span>Cursos</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-note"><span class="note-dot"></span><div><strong>Datos protegidos</strong><small>Conexión privada</small></div></div>
+        <button id="logout-button" class="logout-button"><span>↗</span> Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb"><span>SixSeven</span><b>/</b><strong id="page-name">Resumen</strong></div>
+        <div class="topbar-user"><div class="user-avatar">A</div><div><strong id="current-user">Administrador</strong><small>Panel de gestión</small></div></div>
+      </header>
+
+      <section id="view-overview" class="page-view">
+        <div class="page-heading">
+          <div><p class="eyebrow">PANEL GENERAL</p><h1>Resumen</h1><p class="page-subtitle">Un vistazo al estado de asistencia de tus cursos.</p></div>
+          <div class="period-filter"><label for="report-from">Desde</label><input type="date" id="report-from"><label for="report-to">Hasta</label><input type="date" id="report-to"><button id="refresh-report" class="button button-light">Actualizar</button></div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card stat-blue"><div class="stat-top"><span>Estudiantes activos</span><span class="stat-symbol">♙</span></div><strong id="stat-students">0</strong><small>En todos los cursos</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Presentes</span><span class="stat-symbol green">✓</span></div><strong id="stat-present">0</strong><small>Registros del período</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Ausencias</span><span class="stat-symbol coral">↘</span></div><strong id="stat-absent">0</strong><small>Incluye justificadas</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Asistencia</span><span class="stat-symbol violet">％</span></div><strong id="stat-percent">0%</strong><small>Presentes + tardanzas</small></article>
+        </div>
+        <div class="overview-grid">
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">COMPARATIVA</p><h2>Asistencia por curso</h2></div><span class="panel-caption">Porcentaje</span></div>
+            <div id="course-chart" class="bar-chart"><p class="empty-note">Todavía no hay registros en este período.</p></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">SEGUIMIENTO</p><h2>Más inasistencias</h2></div><span class="panel-caption">Top 8</span></div>
+            <div id="absence-list" class="absence-list"><p class="empty-note">Sin datos para mostrar.</p></div>
+          </article>
+        </div>
+        <div class="report-foot"><span>Los porcentajes se calculan sobre los registros guardados en el período.</span><a id="overview-export" href="/api/reports/export.csv">Descargar CSV ↗</a></div>
+      </section>
+
+      <section id="view-attendance" class="page-view hidden">
+        <div class="page-heading"><div><p class="eyebrow">REGISTRO DIARIO</p><h1>Tomar asistencia</h1><p class="page-subtitle">Elegí un curso y marcá la situación de cada estudiante.</p></div><span class="date-chip" id="attendance-date-chip"></span></div>
+        <article class="panel">
+          <div class="filter-row">
+            <div class="field"><label for="attendance-course">Curso</label><select id="attendance-course" required></select></div>
+            <div class="field"><label for="attendance-date">Fecha</label><input type="date" id="attendance-date" required></div>
+            <div class="field"><label for="attendance-shift">Jornada</label><select id="attendance-shift"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div>
+            <button id="load-attendance" class="button button-primary">Cargar lista</button>
+          </div>
+          <div id="attendance-message" class="inline-message" role="status"></div>
+          <div class="table-wrap"><table><thead><tr><th>Estudiante</th><th>DNI</th><th>Estado</th><th>Observación</th></tr></thead><tbody id="attendance-table"><tr><td colspan="4" class="empty-cell">Seleccioná un curso y cargá la lista.</td></tr></tbody></table></div>
+          <div class="panel-actions"><span id="attendance-count" class="muted-text">0 estudiantes</span><button id="save-attendance" class="button button-primary" disabled>Guardar asistencia <span>→</span></button></div>
+        </article>
+        <div class="status-legend"><span><b class="legend-dot present"></b>P · Presente</span><span><b class="legend-dot absent"></b>A · Ausente</span><span><b class="legend-dot late"></b>T · Tardanza</span><span><b class="legend-dot justified"></b>AJ · Ausente justificado</span></div>
+      </section>
+
+      <section id="view-students" class="page-view hidden">
+        <div class="page-heading"><div><p class="eyebrow">PADRÓN ESCOLAR</p><h1>Estudiantes</h1><p class="page-subtitle">Administrá los datos y la asignación de cada estudiante.</p></div><button id="new-student-button" class="button button-primary">＋ Nuevo estudiante</button></div>
+        <article class="panel">
+          <div class="filter-row student-filters">
+            <div class="field"><label for="students-course">Curso</label><select id="students-course"></select></div>
+            <div class="field search-field"><label for="students-search">Buscar</label><input id="students-search" type="search" placeholder="DNI, apellido o nombre"></div>
+          </div>
+          <div id="student-message" class="inline-message" role="status"></div>
+          <div class="table-wrap"><table><thead><tr><th>Estudiante</th><th>DNI</th><th>Curso</th><th>Estado</th><th></th></tr></thead><tbody id="students-table"><tr><td colspan="5" class="empty-cell">Cargando estudiantes…</td></tr></tbody></table></div>
+        </article>
+        <article id="student-form-panel" class="panel form-panel hidden">
+          <div class="panel-heading"><div><p class="eyebrow">FICHA DEL ESTUDIANTE</p><h2 id="student-form-title">Nuevo estudiante</h2></div><button type="button" id="close-student-form" class="icon-button" aria-label="Cerrar">×</button></div>
+          <form id="student-form" class="form-grid">
+            <input type="hidden" id="student-id">
+            <div class="field"><label for="student-dni">DNI</label><input id="student-dni" maxlength="15" required></div>
+            <div class="field"><label for="student-lastname">Apellido</label><input id="student-lastname" maxlength="80" required></div>
+            <div class="field"><label for="student-firstname">Nombre</label><input id="student-firstname" maxlength="80" required></div>
+            <div class="field"><label for="student-course">Curso</label><select id="student-course" required></select></div>
+            <div class="field"><label for="student-status">Estado</label><select id="student-status"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+            <div class="form-actions"><button type="button" id="cancel-student" class="button button-light">Cancelar</button><button class="button button-primary" type="submit">Guardar estudiante</button></div>
+          </form>
+        </article>
+      </section>
+
+      <section id="view-history" class="page-view hidden">
+        <div class="page-heading"><div><p class="eyebrow">CONSULTAS</p><h1>Historial de asistencia</h1><p class="page-subtitle">Revisá los registros por curso y período.</p></div></div>
+        <article class="panel">
+          <div class="filter-row history-filters">
+            <div class="field"><label for="history-course">Curso</label><select id="history-course"></select></div>
+            <div class="field"><label for="history-from">Desde</label><input type="date" id="history-from"></div>
+            <div class="field"><label for="history-to">Hasta</label><input type="date" id="history-to"></div>
+            <button id="search-history" class="button button-primary">Consultar</button>
+          </div>
+          <div id="history-message" class="inline-message" role="status"></div>
+          <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Curso</th><th>Jornada</th><th>Estado</th><th>Observación</th></tr></thead><tbody id="history-table"><tr><td colspan="6" class="empty-cell">Elegí los filtros para consultar.</td></tr></tbody></table></div>
+          <div class="panel-actions"><span id="history-count" class="muted-text"></span><a id="history-export" class="button button-light" href="/api/reports/export.csv">Exportar CSV ↗</a></div>
+        </article>
+      </section>
+
+      <section id="view-courses" class="page-view hidden">
+        <div class="page-heading"><div><p class="eyebrow">ORGANIZACIÓN</p><h1>Cursos</h1><p class="page-subtitle">Los cursos disponibles para administrar.</p></div></div>
+        <div class="courses-layout">
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">ESTRUCTURA ACTUAL</p><h2>Divisiones</h2></div><span class="panel-caption" id="courses-total">0 cursos</span></div>
+            <div id="courses-list" class="courses-list"></div>
+          </article>
+          <article class="panel add-course-panel">
+            <p class="eyebrow">AMPLIAR LA ESTRUCTURA</p><h2>Agregar curso</h2>
+            <form id="course-form">
+              <div class="field"><label for="course-year">Año</label><select id="course-year"><option value="1">1.º año</option><option value="2">2.º año</option><option value="3">3.º año</option></select></div>
+              <div class="field"><label for="course-division">División</label><input id="course-division" maxlength="5" required placeholder="Ej. D"></div>
+              <div class="field"><label for="course-shift">Turno</label><select id="course-shift"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div>
+              <div id="course-message" class="inline-message" role="status"></div>
+              <button class="button button-primary button-full" type="submit">Agregar división</button>
+            </form>
+          </article>
+        </div>
+      </section>
+      <footer class="app-footer"><span>SixSeven · Gestión de asistencia escolar</span><span>IPET Nº 247 · 2026</span></footer>
+    </main>
+  </div>
+</body>
+</html>
