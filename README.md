@@ -100,7 +100,7 @@ En **Environment** del servicio configurá:
 | `DATABASE_URL` | URI PostgreSQL de Supabase (Session pooler) |
 | `SESSION_SECRET` | Una cadena aleatoria larga y privada |
 
-Render proporciona `PORT) automáticamente; la aplicación lo lee desde `process.env.PORT`. Guardá los cambios y desplegá. Al arrancar, `npm start` prepara las tablas y luego inicia Express.
+Render proporciona `PORT` automáticamente; la aplicación lo lee desde `process.env.PORT`. Guardá los cambios y desplegá. Al arrancar, `npm start` prepara las tablas y luego inicia Express.
 
 Para crear el primer administrador, ejecutá `npm run admin:create` una sola vez desde una terminal local con el mismo `DATABASE_URL` de Supabase y `ADMIN_USER` / `ADMIN_PASSWORD` definidos temporalmente en el entorno. No configures esas dos variables de forma permanente en Render.
 
