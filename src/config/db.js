@@ -1,7 +1,16 @@
+const path = require("node:path");
+const dotenv = require("dotenv");
+
+// Carga siempre el .env situado junto a package.json, no según la carpeta
+// desde la que se haya ejecutado el comando. Las variables del sistema tienen prioridad.
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+
 const { Pool } = require("pg");
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("Falta DATABASE_URL. Configurá la conexión PostgreSQL en el archivo .env o en Render.");
+  throw new Error(
+    "Falta DATABASE_URL. En Windows, copiá .env.example como .env en la carpeta del proyecto y completá la URI PostgreSQL de Supabase. En Render, agregá DATABASE_URL en Environment."
+  );
 }
 
 const pool = new Pool({

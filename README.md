@@ -39,7 +39,9 @@ Sistema web de gestión de asistencia para 1.º, 2.º y 3.º año. Está desarro
    npm install
    ```
 
-2. Copiá `.env.example` a `.env` y completá:
+2. En Windows PowerShell, desde la carpeta raíz del repositorio (la que contiene `package.json`), ejecutá `Copy-Item .env.example .env`. Abrí `.env` con un editor y completá la URI real de PostgreSQL. Asegurate de que el archivo se llame exactamente `.env`, no `.env.txt`.
+
+   Podés comprobar qué variables detecta la aplicación con `npm run env:check`. El comando no muestra ni imprime los secretos.
 
    ```env
    NODE_ENV=development

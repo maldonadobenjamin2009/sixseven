@@ -10,7 +10,8 @@
     "db:init": "node scripts/init-db.js",
     "admin:create": "node scripts/create-admin.js",
     "check": "node --check server.js && node --check src/config/db.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && node --check src/routes/courses.js && node --check src/routes/students.js && node --check src/routes/attendance.js && node --check src/routes/reports.js && node --check scripts/init-db.js && node --check scripts/create-admin.js && node --check public/js/app.js",
-    "test:integration": "node tests/integration.js"
+    "test:integration": "node tests/integration.js",
+    "env:check": "node scripts/check-env.js"
   },
   "engines": {
     "node": ">=20"
