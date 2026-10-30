@@ -91,10 +91,18 @@ function fillCourseSelects() {
     if (!select.value && state.courses.length) select.value = String(state.courses[0].id_curso);
   });
 }
+function syncAttendanceShift() {
+  const selected = state.courses.find((course) => String(course.id_curso) === $("#attendance-course").value);
+  if (selected && [...$("#attendance-shift").options].some((option) => option.value === selected.turno)) {
+    $("#attendance-shift").value = selected.turno;
+  }
+}
 async function loadCourses() {
   const data = await api("/api/courses");
   state.courses = data.courses;
   fillCourseSelects();
+  syncAttendanceShift();
+  $("#stat-students").textContent = state.courses.reduce((sum, course) => sum + Number(course.total_estudiantes || 0), 0);
   renderCourses();
 }
 function renderCourses() {
@@ -115,8 +123,6 @@ async function loadStudents() {
   const data = await api(`/api/students?${params}`);
   state.students = data.students;
   renderStudents();
-  const activeCount = state.students.filter((student) => student.estado).length;
-  $("#stat-students").textContent = activeCount;
 }
 function renderStudents() {
   const rows = state.students.map((student) => {
@@ -327,6 +333,7 @@ function attachEvents() {
   });
   $("#load-attendance").addEventListener("click", () => loadAttendance().catch((error) => message($("#attendance-message"), error.message)));
   $("#attendance-course").addEventListener("change", () => {
+    syncAttendanceShift();
     state.attendanceStudents = [];
     $("#attendance-table").innerHTML = '<tr><td colspan="4" class="empty-cell">Cargá la lista para continuar.</td></tr>';
     $("#save-attendance").disabled = true;
