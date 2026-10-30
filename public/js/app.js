@@ -180,7 +180,7 @@ function renderAttendance() {
     </tr>`).join("") : '<tr><td colspan="4" class="empty-cell">Este curso no tiene estudiantes activos.</td></tr>';
 }
 async function saveAttendance() {
-  const rows = $("#attendance-table [data-student-row]").filter((row) => row.dataset.recorded !== "true");
+  const rows = Array.from(document.querySelectorAll("#attendance-table [data-student-row]")).filter((row) => row.dataset.recorded !== "true");
   if (!rows.length) return;
   const records = rows.map((row) => ({
     studentId: Number(row.dataset.studentRow),
