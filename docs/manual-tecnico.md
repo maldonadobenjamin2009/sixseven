@@ -76,6 +76,21 @@ Para un backend persistente sobre IPv4, el Session pooler compartido es una alte
 
 La URI de PostgreSQL es privada: solo debe estar en el backend o en las variables secretas del servicio. Nunca la incluyas en archivos del directorio `public`.
 
+## Inicializar Supabase desde GitHub Actions (sin Render Shell)
+
+Este método también sirve cuando el Web Service está en el plan gratuito, que no incluye Dashboard Shell ni SSH.
+
+1. En Supabase, cambiá primero la contraseña de la base de datos desde **Database → Settings** y copiá una nueva URI de **Connect → Session pooler**.
+2. En GitHub, abrí **Settings → Secrets and variables → Actions** y creá estos tres repository secrets:
+   - `SUPABASE_DATABASE_URL`: URI completa nueva de PostgreSQL.
+   - `SIXSEVEN_ADMIN_USER`: usuario inicial (por ejemplo, `admin`).
+   - `SIXSEVEN_ADMIN_PASSWORD`: contraseña personal nueva de al menos 10 caracteres.
+3. Abrí **Actions → Bootstrap Supabase database → Run workflow**.
+4. Activá `create_admin` para crear también la primera cuenta.
+5. Al finalizar, comprobá que todos los pasos indiquen éxito.
+
+El workflow manual ejecuta `npm run db:init` y opcionalmente `npm run admin:create`. No se debe guardar la URI ni la contraseña en archivos del repositorio, variables públicas ni en el código frontend.
+
 ## Render
 
 El repositorio incluye [render.yaml](../render.yaml). Podés publicarlo como Blueprint o crear un Web Service manualmente.

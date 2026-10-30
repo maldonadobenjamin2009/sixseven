@@ -92,6 +92,21 @@ SixSeven usa PostgreSQL directamente desde el backend Node con el paquete `pg`. 
 
 **Importante:** la cadena de conexión es un secreto. No la pongas en `public/js/app.js`, HTML, capturas, commits ni mensajes públicos. El archivo `.env` ya está excluido por `.gitignore`.
 
+## Inicializar Supabase desde GitHub Actions
+
+Para crear las tablas y el administrador sin necesitar una Shell de Render:
+
+1. Primero rotá la contraseña de PostgreSQL en Supabase (Database → Settings), porque una URI con contraseña fue compartida y debe considerarse expuesta.
+2. En GitHub, abrí Settings → Secrets and variables → Actions y agregá:
+   - `SUPABASE_DATABASE_URL`: URI nueva de Session pooler.
+   - `SIXSEVEN_ADMIN_USER`: nombre de usuario inicial.
+   - `SIXSEVEN_ADMIN_PASSWORD`: contraseña nueva de al menos 10 caracteres.
+3. Abrí la pestaña Actions y elegí **Bootstrap Supabase database**.
+4. Presioná **Run workflow**. Marcá `create_admin` para crear también la cuenta inicial.
+5. Revisá los pasos de la ejecución. No se imprimen los secretos en los logs.
+
+El workflow corre `npm run db:init` y, cuando se solicita, `npm run admin:create`. Es manual y no se ejecuta en cada deploy.
+
 ## Publicar en Render
 
 El archivo `render.yaml` deja configurado el servicio web. También podés crearlo desde el Dashboard:
