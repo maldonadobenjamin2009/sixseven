@@ -100,7 +100,7 @@ El repositorio incluye [render.yaml](../render.yaml). Podés publicarlo como Blu
 - Start command: `npm start`.
 - Health check: `/api/health`.
 
-Variables en Render:
+Variables en Environment del **Web Service**:
 
 ```env
 NODE_ENV=production
@@ -109,8 +109,13 @@ DATABASE_URL=<URI PostgreSQL de Supabase>
 SESSION_SECRET=<secreto aleatorio largo>
 ```
 
-Render configura `PORT`. El arranque prepara la base y luego levanta Express. Para crear el primer administrador, ejecutá `npm run admin:create` desde una terminal local conectada a la misma base Supabase, usando variables temporales.
+El backend acepta `DATABASE_URL` y también `SUPABASE_DATABASE_URL` como alias. La URI debe estar guardada en Environment del servicio web, no solamente como GitHub Actions Secret ni en un Environment Group sin vincular.
 
+Después de agregar o cambiar una variable, elegí **Save, rebuild, and deploy**. `Save only` guarda el valor pero no lo incorpora al proceso hasta otro deploy. Si usás un Environment Group, entrá al Web Service y confirmá que aparezca en **Linked Environment Groups**.
+
+Si continúa faltando, el mensaje del servidor mostrará solamente si Render fue detectado, el tipo de servicio y si existe cada nombre de variable; nunca mostrará sus valores.
+
+Render configura `PORT`. El arranque ejecuta la inicialización idempotente de la base y luego levanta Express. Para crear el primer administrador, ejecutá `npm run admin:create` desde una terminal local conectada a la misma base Supabase, usando variables temporales.
 ## Rutas API
 
 | Método | Ruta | Función |

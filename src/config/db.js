@@ -1,20 +1,37 @@
 const path = require("node:path");
 const dotenv = require("dotenv");
 
-// Carga siempre el .env situado junto a package.json, no según la carpeta
-// desde la que se haya ejecutado el comando. Las variables del sistema tienen prioridad.
+// Load the repository-root .env for local development. Render's environment
+// variables are already injected into process.env and take precedence.
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const { Pool } = require("pg");
 
-if (!process.env.DATABASE_URL) {
+// GitHub Actions uses SUPABASE_DATABASE_URL; Render and local setup normally
+// use DATABASE_URL. Accept both, preferring the standard DATABASE_URL.
+const connectionString =
+  process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
+
+if (!connectionString) {
+  const onRender = process.env.RENDER === "true";
+  const serviceType = process.env.RENDER_SERVICE_TYPE || "unknown";
+  const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
+  const hasSupabaseDatabaseUrl = Boolean(process.env.SUPABASE_DATABASE_URL);
+
   throw new Error(
-    "Falta DATABASE_URL. En Windows, copiá .env.example como .env en la carpeta del proyecto y completá la URI PostgreSQL de Supabase. En Render, agregá DATABASE_URL en Environment."
+    "Falta la URI de PostgreSQL. " +
+    `Diagnóstico seguro: RENDER=${onRender ? "true" : "false"}, ` +
+    `RENDER_SERVICE_TYPE=${serviceType}, ` +
+    `DATABASE_URL presente=${hasDatabaseUrl}, ` +
+    `SUPABASE_DATABASE_URL presente=${hasSupabaseDatabaseUrl}. ` +
+    "En Render, agregá DATABASE_URL (o SUPABASE_DATABASE_URL) en Environment " +
+    "del Web Service sixseven y elegí Save, rebuild, and deploy. " +
+    "No pegues la URI en logs ni en GitHub."
   );
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: process.env.DB_SSL === "true" || process.env.NODE_ENV === "production"
     ? { rejectUnauthorized: false }
     : false,

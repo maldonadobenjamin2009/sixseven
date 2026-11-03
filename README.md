@@ -109,7 +109,7 @@ El workflow corre `npm run db:init` y, cuando se solicita, `npm run admin:create
 
 ## Publicar en Render
 
-El archivo `render.yaml` deja configurado el servicio web. También podés crearlo desde el Dashboard:
+El archivo `render.yaml` deja configurado el servicio web. Podés desplegarlo como Blueprint o crear un Web Service manualmente.
 
 - Repository: `maldonadobenjamin2009/sixseven`
 - Runtime: Node
@@ -117,7 +117,7 @@ El archivo `render.yaml` deja configurado el servicio web. También podés crear
 - Start command: `npm start`
 - Health check: `/api/health`
 
-En **Environment** del servicio configurá:
+En **Environment** del Web Service configurá:
 
 | Variable | Valor |
 | --- | --- |
@@ -126,9 +126,11 @@ En **Environment** del servicio configurá:
 | `DATABASE_URL` | URI PostgreSQL de Supabase (Session pooler) |
 | `SESSION_SECRET` | Una cadena aleatoria larga y privada |
 
-Render proporciona `PORT` automáticamente; la aplicación lo lee desde `process.env.PORT`. Guardá los cambios y desplegá. Al arrancar, `npm start` prepara las tablas y luego inicia Express.
+En Render, el backend acepta `DATABASE_URL` (nombre recomendado) o `SUPABASE_DATABASE_URL` (alias usado por el workflow manual). Configurá al menos una de las dos en el **Environment del Web Service**. Si las guardaste en un Environment Group, asegurate de vincular ese grupo al servicio. Elegí **Save, rebuild, and deploy**; no uses **Save only**.
 
-Para crear el primer administrador, ejecutá `npm run admin:create` una sola vez desde una terminal local con el mismo `DATABASE_URL` de Supabase y `ADMIN_USER` / `ADMIN_PASSWORD` definidos temporalmente en el entorno. No configures esas dos variables de forma permanente en Render.
+Render proporciona `PORT` automáticamente; la aplicación lo lee desde `process.env.PORT`. Al iniciar, `npm start` prepara las tablas y luego inicia Express.
+
+Para crear el primer administrador, ejecutá `npm run admin:create` una sola vez desde una terminal local con la misma conexión a la base y las variables de administrador definidas temporalmente. No configures esas dos variables de forma permanente en Render.
 
 ## Rutas principales de la API
 
