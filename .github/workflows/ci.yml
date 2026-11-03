@@ -42,10 +42,5 @@ jobs:
         run: npm run check
       - name: Initialize PostgreSQL schema
         run: npm run db:init
-      - name: Create temporary test administrator
-        run: npm run admin:create
-        env:
-          ADMIN_USER: ci-admin
-          ADMIN_PASSWORD: ci-only-password-123
       - name: Exercise login, CRUD, attendance, duplicate protection and reports
         run: npm run test:integration
