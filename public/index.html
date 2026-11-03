@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/app.js" defer></script>
 </head>
 <body>
@@ -24,15 +25,44 @@
         <h1>La asistencia,<br><em>en orden.</em></h1>
         <p>Una forma simple de registrar, consultar y hacer seguimiento de cada curso.</p>
       </div>
-      <form id="login-form" class="login-form">
-        <label for="login-username">Usuario</label>
-        <input id="login-username" name="username" autocomplete="username" required maxlength="50" placeholder="Tu usuario">
-        <label for="login-password">Contraseña</label>
-        <input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña">
-        <p id="login-error" class="form-error" role="alert"></p>
-        <button class="button button-primary button-full" type="submit">Ingresar <span aria-hidden="true">→</span></button>
-      </form>
-      <p class="login-foot">Acceso exclusivo para personal autorizado.</p>
+      <div id="auth-forms">
+        <form id="login-form" class="login-form auth-form">
+          <label for="login-email">Correo electrónico</label>
+          <input id="login-email" type="email" autocomplete="username" required maxlength="255" placeholder="tu@correo.com">
+          <label for="login-password">Contraseña</label>
+          <input id="login-password" type="password" autocomplete="current-password" required minlength="8" placeholder="Tu contraseña">
+          <p id="login-error" class="form-error" role="alert"></p>
+          <button class="button button-primary button-full" type="submit">Ingresar <span aria-hidden="true">→</span></button>
+          <button class="button button-google button-full" id="google-login-button" type="button"><span class="google-g">G</span> Continuar con Google</button>
+          <div class="auth-links"><button type="button" class="text-link" id="show-register">Crear una cuenta</button><button type="button" class="text-link" id="show-forgot">Olvidé mi contraseña</button></div>
+        </form>
+        <form id="register-form" class="login-form auth-form hidden">
+          <h2>Crear cuenta</h2>
+          <label for="register-name">Nombre completo</label>
+          <input id="register-name" autocomplete="name" required maxlength="120" placeholder="Tu nombre">
+          <label for="register-email">Correo electrónico</label>
+          <input id="register-email" type="email" autocomplete="email" required maxlength="255" placeholder="tu@correo.com">
+          <label for="register-password">Contraseña</label>
+          <input id="register-password" type="password" autocomplete="new-password" required minlength="10" placeholder="Mínimo 10 caracteres">
+          <label for="register-password-confirm">Repetir contraseña</label>
+          <input id="register-password-confirm" type="password" autocomplete="new-password" required minlength="10" placeholder="Repetí tu contraseña">
+          <p id="register-error" class="form-error" role="alert"></p>
+          <button class="button button-primary button-full" type="submit">Crear cuenta</button>
+          <button class="button button-google button-full" id="google-register-button" type="button"><span class="google-g">G</span> Registrarme con Google</button>
+          <div class="auth-links"><button type="button" class="text-link" id="show-login">Ya tengo una cuenta</button></div>
+        </form>
+        <form id="forgot-form" class="login-form auth-form hidden">
+          <h2>Recuperar contraseña</h2>
+          <p class="page-subtitle">Te enviaremos un enlace para elegir una contraseña nueva.</p>
+          <label for="forgot-email">Correo electrónico</label>
+          <input id="forgot-email" type="email" autocomplete="email" required placeholder="tu@correo.com">
+          <p id="forgot-error" class="form-error" role="alert"></p>
+          <button class="button button-primary button-full" type="submit">Enviar enlace</button>
+          <div class="auth-links"><button type="button" class="text-link" id="forgot-back">Volver al inicio de sesión</button></div>
+        </form>
+        <p id="auth-notice" class="auth-notice" role="status"></p>
+      </div>
+      <p class="login-foot">Las cuentas nuevas requieren aprobación de un administrador.</p>
     </section>
     <aside class="login-aside">
       <div class="aside-orbit orbit-one"></div><div class="aside-orbit orbit-two"></div>
@@ -46,6 +76,28 @@
     </aside>
   </div>
 
+  <div id="pending-view" class="login-layout hidden">
+    <section class="login-panel">
+      <div class="brand brand-login"><div class="brand-mark">7</div><div><strong>sixseven</strong><span>GESTIÓN ESCOLAR</span></div></div>
+      <div class="login-copy"><p class="eyebrow">CUENTA REGISTRADA</p><h1>En revisión.</h1><p id="pending-message">Tu cuenta está pendiente de aprobación por un administrador.</p></div>
+      <button id="retry-account-button" class="button button-primary button-full" type="button">Volver a comprobar</button>
+      <button id="pending-logout-button" class="button button-light button-full" type="button">Cerrar sesión</button>
+    </section>
+    <aside class="login-aside"><div class="aside-content"><span class="aside-tag">SIXSEVEN</span><h2>Acceso protegido.</h2><p>Un administrador debe habilitar las cuentas nuevas antes de acceder a la información escolar.</p></div></aside>
+  </div>
+  <div id="password-recovery-view" class="login-layout hidden">
+    <section class="login-panel">
+      <div class="brand brand-login"><div class="brand-mark">7</div><div><strong>sixseven</strong><span>GESTIÓN ESCOLAR</span></div></div>
+      <div class="login-copy"><p class="eyebrow">SEGURIDAD DE LA CUENTA</p><h1>Nueva contraseña.</h1><p>Elegí una contraseña nueva para tu cuenta.</p></div>
+      <form id="password-recovery-form" class="login-form">
+        <label for="recovery-password">Nueva contraseña</label><input id="recovery-password" type="password" required minlength="10" autocomplete="new-password">
+        <label for="recovery-password-confirm">Repetir contraseña</label><input id="recovery-password-confirm" type="password" required minlength="10" autocomplete="new-password">
+        <p id="recovery-error" class="form-error" role="alert"></p>
+        <button class="button button-primary button-full" type="submit">Actualizar contraseña</button>
+      </form>
+    </section>
+    <aside class="login-aside"><div class="aside-content"><span class="aside-tag">SIXSEVEN</span><h2>Tu cuenta,<br>protegida.</h2></div></aside>
+  </div>
   <div id="dashboard-view" class="app-layout hidden">
     <aside class="sidebar">
       <a class="brand sidebar-brand" href="#" aria-label="SixSeven inicio">
@@ -59,6 +111,8 @@
         <button class="nav-link" data-view="students"><span class="nav-icon">♙</span>Estudiantes</button>
         <button class="nav-link" data-view="history"><span class="nav-icon">◷</span>Historial</button>
         <button class="nav-link" data-view="courses"><span class="nav-icon">▦</span>Cursos</button>
+        <button class="nav-link" data-view="account"><span class="nav-icon">⚙</span>Mi cuenta</button>
+        <button class="nav-link hidden" id="admin-users-nav" data-view="admin-users"><span class="nav-icon">♧</span>Usuarios</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="sidebar-note"><span class="note-dot"></span><div><strong>Datos protegidos</strong><small>Conexión privada</small></div></div>
@@ -170,6 +224,26 @@
             </form>
           </article>
         </div>
+      </section>
+      <section id="view-account" class="page-view hidden">
+        <div class="page-heading"><div><p class="eyebrow">PERFIL</p><h1>Mi cuenta</h1><p class="page-subtitle">Consultá tu identidad y actualizá tu contraseña.</p></div></div>
+        <article class="panel account-panel">
+          <div class="account-identity"><div class="user-avatar">U</div><div><strong id="account-name">Usuario</strong><small id="account-email">correo@example.com</small></div></div>
+          <form id="account-password-form" class="account-password-form">
+            <h2>Cambiar contraseña</h2>
+            <div class="field"><label for="account-password">Nueva contraseña</label><input id="account-password" type="password" minlength="10" autocomplete="new-password" required></div>
+            <div class="field"><label for="account-password-confirm">Repetir contraseña</label><input id="account-password-confirm" type="password" minlength="10" autocomplete="new-password" required></div>
+            <p id="account-message" class="inline-message" role="status"></p>
+            <button class="button button-primary" type="submit">Actualizar contraseña</button>
+          </form>
+        </article>
+      </section>
+      <section id="view-admin-users" class="page-view hidden">
+        <div class="page-heading"><div><p class="eyebrow">ADMINISTRACIÓN</p><h1>Cuentas de usuario</h1><p class="page-subtitle">Aprobá nuevas cuentas y administrá sus permisos.</p></div></div>
+        <article class="panel">
+          <div id="admin-users-message" class="inline-message" role="status"></div>
+          <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="admin-users-table"><tr><td colspan="5" class="empty-cell">Cargando cuentas…</td></tr></tbody></table></div>
+        </article>
       </section>
       <footer class="app-footer"><span>SixSeven · Gestión de asistencia escolar</span><span>IPET Nº 247 · 2026</span></footer>
     </main>

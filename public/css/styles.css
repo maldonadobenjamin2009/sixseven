@@ -217,3 +217,23 @@ td:first-child { color: #35435c; font-weight: 600; }
   .panel-actions { align-items: stretch; flex-direction: column; }
   .panel-actions .button { width: 100%; }
 }
+
+/* Supabase Auth, perfil y administración */
+.auth-form h2 { margin: 5px 0 8px; }
+.button-google { margin-top: 2px; border: 1px solid #e1e7ef; background: #fff; color: #38445a; box-shadow: none; }
+.button-google:hover { background: #f8faff; }
+.google-g { font: 800 15px Arial, sans-serif; color: #4285f4; }
+.auth-links { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 7px; }
+.text-link { border: 0; background: transparent; color: var(--blue); padding: 5px 0; font-size: 10px; font-weight: 700; }
+.auth-notice { min-height: 0; margin: 8px 0 0; color: #1e8a6a; font-size: 11px; line-height: 1.5; }
+.auth-notice:empty { display: none; }
+.account-panel { max-width: 680px; }
+.account-identity { display: flex; align-items: center; gap: 13px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.account-identity strong, .account-identity small { display: block; }
+.account-identity strong { font-size: 14px; }
+.account-identity small { color: var(--muted); margin-top: 4px; font-size: 11px; }
+.account-password-form { display: grid; gap: 13px; max-width: 420px; padding-top: 22px; }
+.account-password-form h2 { margin-bottom: 4px; }
+.user-role-select { border: 1px solid var(--line); border-radius: 6px; padding: 6px; background: white; color: var(--ink); font-size: 10px; }
+.success-message { color: #1e8a6a !important; }
+@media (max-width: 760px) { .auth-links { justify-content: space-between; } .account-panel { padding: 17px; } }
