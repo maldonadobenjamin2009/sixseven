@@ -19,7 +19,7 @@ router.get("/users", requireAuth, requireAdmin, async (req, res, next) => {
   try {
     const result = await pool.query(
       `SELECT id_usuario, nombre_usuario, email, nombre_completo, rol, activo, creado_en
-       FROM usuarios ORDER BY activo ASC, creado_en DESC, id_usuario DESC`
+       FROM usuarios WHERE auth_user_id IS NOT NULL ORDER BY activo ASC, creado_en DESC, id_usuario DESC`
     );
     res.json({ users: result.rows });
   } catch (error) { next(error); }

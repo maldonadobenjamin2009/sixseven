@@ -1,13 +1,23 @@
 # Manual de usuario
 
-## Acceso
+## Crear cuenta e ingresar
 
 1. Abrí la URL de SixSeven.
-2. Ingresá el usuario y la contraseña entregados por el administrador.
-3. Presioná **Ingresar**.
-4. Para terminar, elegí **Cerrar sesión**.
+2. Para registrarte con correo, elegí **Crear una cuenta**, completá nombre, email y contraseña y confirmá el correo si Supabase lo solicita.
+3. También podés usar **Registrarme con Google** o **Continuar con Google**.
+4. Las cuentas nuevas quedan pendientes hasta que un administrador las apruebe.
+5. Una vez aprobada, iniciá sesión con correo/contraseña o Google.
+6. Para terminar, elegí **Cerrar sesión**.
 
-No existe usuario o contraseña predeterminados. La primera cuenta se crea mediante el procedimiento técnico.
+## Recuperar o cambiar contraseña
+
+- En el acceso, elegí **Olvidé mi contraseña**, ingresá tu email y abrí el enlace enviado por correo.
+- En **Mi cuenta**, podés cambiar la contraseña mientras tengas una sesión abierta.
+- Supabase Auth gestiona las contraseñas; la aplicación no las guarda en texto plano.
+
+## Administración de cuentas
+
+Los administradores tienen una sección **Usuarios** para aprobar registros, desactivar cuentas y asignar roles Docente o Administrador. No desactives ni quites permisos al último administrador activo.
 
 ## Resumen
 

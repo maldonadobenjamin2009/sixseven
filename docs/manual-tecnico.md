@@ -2,13 +2,13 @@
 
 ## Tecnologías
 
-HTML5, CSS3, JavaScript, Node.js, Express, PostgreSQL y GitHub. La conexión PostgreSQL se realiza desde el backend con `pg`. Las sesiones se almacenan en PostgreSQL y las contraseñas se protegen con bcrypt.
+HTML5, CSS3, JavaScript, Node.js, Express y PostgreSQL. Supabase Auth gestiona cuentas y credenciales; PostgreSQL almacena perfiles, cursos, estudiantes y asistencias. Node utiliza `pg` para la base privada y valida los tokens contra Supabase Auth.
 
 ## Requisitos
 
 - Node.js 20 o superior.
 - npm y Git.
-- Una base PostgreSQL accesible.
+- Un proyecto Supabase con PostgreSQL y Auth.
 
 ## Instalación local
 
@@ -18,41 +18,27 @@ cd sixseven
 npm install
 ```
 
-Copiá `.env.example` a `.env` y configurá:
+Copiá `.env.example` a `.env` (PowerShell: `Copy-Item .env.example .env`) y completá:
 
 ```env
 NODE_ENV=development
 PORT=3000
-DATABASE_URL=postgresql://usuario:password@host:5432/postgres
-DB_SSL=false
-SESSION_SECRET=una-clave-larga-y-aleatoria
+DATABASE_URL=<URI PostgreSQL Session Pooler>
+DB_SSL=true
+SUPABASE_URL=https://PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=<clave pública anon o publishable>
 ```
 
-Para Supabase, usá `DB_SSL=true`.
+No uses `service_role` en el navegador.
 
-## Inicializar base de datos
+## Inicialización
 
 ```bash
 npm run db:init
 npm start
 ```
 
-El esquema y los cursos iniciales se crean de forma idempotente. `npm start` vuelve a verificar las tablas antes de iniciar Express.
-
-## Crear el administrador
-
-Definí temporalmente las variables y ejecutá el script:
-
-**PowerShell**
-```powershell
-$env:ADMIN_USER="admin"
-$env:ADMIN_PASSWORD="una-clave-larga-y-unica"
-npm run admin:create
-Remove-Item Env:ADMIN_USER
-Remove-Item Env:ADMIN_PASSWORD
-```
-
-El script genera un hash bcrypt, exige al menos 10 caracteres y no modifica usuarios existentes.
+El script prepara tablas y cursos. Cuando `SUPABASE_URL` está definida, aplica también `database/supabase-auth.sql`, que vincula perfiles con `auth.users`, crea el trigger de nuevos usuarios y habilita RLS para las tablas escolares.
 
 ## Variables de entorno
 
@@ -60,70 +46,77 @@ El script genera un hash bcrypt, exige al menos 10 caracteres y no modifica usua
 | --- | --- |
 | `PORT` | Puerto HTTP; Render lo proporciona |
 | `DATABASE_URL` | URI PostgreSQL privada |
-| `DB_SSL` | SSL cuando vale `true` |
-| `SESSION_SECRET` | Secreto para las cookies de sesión |
-| `NODE_ENV` | En producción debe ser `production` |
+| `DB_SSL` | Activa SSL cuando vale `true` |
+| `SUPABASE_URL` | URL del proyecto Supabase |
+| `SUPABASE_ANON_KEY` | Clave pública anon o publishable |
+| `SUPABASE_PUBLISHABLE_KEY` | Alternativa a la variable anterior |
+| `NODE_ENV` | En producción: `production` |
 
-## Supabase
+La clave pública se entrega al frontend para iniciar Supabase Auth. El backend la usa para validar cada bearer token. No se necesita ni se debe exponer `service_role`.
 
-1. Creá un proyecto Supabase.
-2. En **Connect**, elegí **Session pooler** y copiá la URI PostgreSQL.
-3. Reemplazá el marcador de contraseña. Codificá caracteres reservados para URL.
-4. Guardá la URI completa en `DATABASE_URL` y configurá `DB_SSL=true`.
-5. Ejecutá `npm run db:init` y luego `npm run admin:create`.
+## Primer administrador
 
-Para un backend persistente sobre IPv4, el Session pooler compartido es una alternativa compatible. Si el entorno tiene IPv6 (o un complemento IPv4), también se puede usar conexión directa. Copiá siempre host, usuario y puerto desde el panel de Supabase.
+1. Registrá el primer usuario desde la aplicación, con email/contraseña o Google.
+2. Confirmá el correo si Supabase lo solicita.
+3. En Supabase → SQL Editor ejecutá, sustituyendo el correo:
 
-La URI de PostgreSQL es privada: solo debe estar en el backend o en las variables secretas del servicio. Nunca la incluyas en archivos del directorio `public`.
+```sql
+UPDATE public.usuarios
+SET activo = TRUE, rol = 'administrador'
+WHERE lower(email) = lower('TU_CORREO')
+RETURNING id_usuario, email, rol, activo;
+```
 
-## Inicializar Supabase desde GitHub Actions (sin Render Shell)
+4. Volvé a iniciar sesión o pulsá **Volver a comprobar** en la pantalla de cuenta pendiente.
 
-Este método también sirve cuando el Web Service está en el plan gratuito, que no incluye Dashboard Shell ni SSH.
+Las siguientes cuentas quedan pendientes con rol docente hasta que un administrador las apruebe, las desactive o les asigne un rol desde el módulo **Usuarios**.
 
-1. En Supabase, cambiá primero la contraseña de la base de datos desde **Database → Settings** y copiá una nueva URI de **Connect → Session pooler**.
-2. En GitHub, abrí **Settings → Secrets and variables → Actions** y creá estos tres repository secrets:
-   - `SUPABASE_DATABASE_URL`: URI completa nueva de PostgreSQL.
-   - `SIXSEVEN_ADMIN_USER`: usuario inicial (por ejemplo, `admin`).
-   - `SIXSEVEN_ADMIN_PASSWORD`: contraseña personal nueva de al menos 10 caracteres.
-3. Abrí **Actions → Bootstrap Supabase database → Run workflow**.
-4. Activá `create_admin` para crear también la primera cuenta.
-5. Al finalizar, comprobá que todos los pasos indiquen éxito.
+## Configurar Google OAuth
 
-El workflow manual ejecuta `npm run db:init` y opcionalmente `npm run admin:create`. No se debe guardar la URI ni la contraseña en archivos del repositorio, variables públicas ni en el código frontend.
+1. En Google Cloud Console creá un OAuth Client ID de tipo Web application.
+2. En Authorized JavaScript origins agregá el dominio real de Render y `http://localhost:3000` para desarrollo.
+3. En Authorized redirect URIs agregá la callback exacta que Supabase muestra en Authentication → Providers → Google. Suele ser `https://PROJECT_REF.supabase.co/auth/v1/callback`.
+4. En Supabase → Authentication → Providers → Google, habilitá el proveedor y cargá Client ID y Client Secret.
+5. En Supabase → Authentication → URL Configuration, configurá Site URL con el dominio de Render y agregá Redirect URLs para producción y `http://localhost:3000/**`.
+
+El Client Secret queda en Supabase, nunca en GitHub, el frontend ni Render.
+
+## Recuperar y cambiar contraseñas
+
+- **Olvidé mi contraseña** usa `supabase.auth.resetPasswordForEmail`.
+- El enlace vuelve a `/?mode=recovery`; luego `supabase.auth.updateUser` guarda la nueva contraseña.
+- En **Mi cuenta**, un usuario autenticado puede actualizar su contraseña.
+
+La confirmación por correo puede permanecer habilitada en Supabase Authentication.
 
 ## Render
 
-El repositorio incluye [render.yaml](../render.yaml). Podés publicarlo como Blueprint o crear un Web Service manualmente.
+El repositorio incluye `render.yaml`. Configurá el Web Service:
 
-- Runtime: Node.
 - Build command: `npm install`.
 - Start command: `npm start`.
 - Health check: `/api/health`.
 
-Variables en Environment del **Web Service**:
+Variables en Environment:
 
 ```env
 NODE_ENV=production
 DB_SSL=true
-DATABASE_URL=<URI PostgreSQL de Supabase>
-SESSION_SECRET=<secreto aleatorio largo>
+DATABASE_URL=<URI PostgreSQL Session Pooler>
+SUPABASE_URL=https://PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=<clave pública anon o publishable>
 ```
 
-El backend acepta `DATABASE_URL` y también `SUPABASE_DATABASE_URL` como alias. La URI debe estar guardada en Environment del servicio web, no solamente como GitHub Actions Secret ni en un Environment Group sin vincular.
+Elegí **Save, rebuild, and deploy**. El arranque ejecuta la inicialización de esquema y la migración de Auth.
 
-Después de agregar o cambiar una variable, elegí **Save, rebuild, and deploy**. `Save only` guarda el valor pero no lo incorpora al proceso hasta otro deploy. Si usás un Environment Group, entrá al Web Service y confirmá que aparezca en **Linked Environment Groups**.
-
-Si continúa faltando, el mensaje del servidor mostrará solamente si Render fue detectado, el tipo de servicio y si existe cada nombre de variable; nunca mostrará sus valores.
-
-Render configura `PORT`. El arranque ejecuta la inicialización idempotente de la base y luego levanta Express. Para crear el primer administrador, ejecutá `npm run admin:create` desde una terminal local conectada a la misma base Supabase, usando variables temporales.
 ## Rutas API
 
 | Método | Ruta | Función |
 | --- | --- | --- |
 | GET | `/api/health` | Salud de servidor y base |
-| POST | `/api/auth/login` | Iniciar sesión |
-| GET | `/api/auth/me` | Usuario autenticado |
-| POST | `/api/auth/logout` | Cerrar sesión |
+| GET | `/api/auth/config` | Configuración pública de Supabase |
+| GET | `/api/auth/me` | Perfil autenticado |
+| GET / PATCH | `/api/auth/users` | Listar y actualizar cuentas (admin) |
 | GET / POST | `/api/courses` | Consultar y crear cursos |
 | GET / POST | `/api/students` | Consultar y crear estudiantes |
 | PUT / DELETE | `/api/students/:id` | Editar o dar de baja |
@@ -141,4 +134,4 @@ npm run db:init
 npm run test:integration
 ```
 
-La integración se prueba en GitHub Actions con PostgreSQL temporal. La prueba manual contra Supabase y la publicación en Render se completan con las cuentas del responsable del proyecto.
+GitHub Actions prueba la API con PostgreSQL temporal. El flujo real con correo, Google y Render requiere las credenciales propias del proyecto Supabase.

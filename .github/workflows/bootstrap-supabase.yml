@@ -1,57 +1,35 @@
-name: Bootstrap Supabase database
+name: Initialize Supabase schema
 
 on:
   workflow_dispatch:
-    inputs:
-      create_admin:
-        description: "Crear la primera cuenta administradora (requiere los secretos SIXSEVEN_ADMIN_USER y SIXSEVEN_ADMIN_PASSWORD)"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
 jobs:
-  bootstrap:
+  initialize:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       DB_SSL: "true"
       NODE_ENV: production
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install dependencies
         run: npm install
-
-      - name: Check database secret is configured
+      - name: Check required secrets
         shell: bash
         run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "::error::Falta el secret SUPABASE_DATABASE_URL en Settings > Secrets and variables > Actions."
+          if [ -z "$DATABASE_URL" ] || [ -z "$SUPABASE_URL" ]; then
+            echo "::error::Configurá SUPABASE_DATABASE_URL y SUPABASE_URL como repository secrets."
             exit 1
           fi
-          echo "Se encontró la variable de conexión. Su valor no se mostrará."
-
-      - name: Create database tables and initial courses
+          echo "Se encontraron las variables. Sus valores no se mostrarán."
+      - name: Initialize tables, Auth trigger and courses
         run: npm run db:init
-
-      - name: Create initial administrator
-        if: ${{ inputs.create_admin }}
-        env:
-          ADMIN_USER: ${{ secrets.SIXSEVEN_ADMIN_USER }}
-          ADMIN_PASSWORD: ${{ secrets.SIXSEVEN_ADMIN_PASSWORD }}
-        shell: bash
-        run: |
-          if [ -z "$ADMIN_USER" ] || [ -z "$ADMIN_PASSWORD" ]; then
-            echo "::error::Para crear el administrador, configurá SIXSEVEN_ADMIN_USER y SIXSEVEN_ADMIN_PASSWORD como repository secrets."
-            exit 1
-          fi
-          npm run admin:create

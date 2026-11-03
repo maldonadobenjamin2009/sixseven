@@ -13,7 +13,7 @@ Sistema web de gestión de asistencia para 1.º, 2.º y 3.º año. Está desarro
 
 ## Funcionalidades implementadas
 
-- Inicio y cierre de sesión con contraseñas almacenadas mediante bcrypt y sesiones guardadas en PostgreSQL.
+- Registro e inicio de sesión con Supabase Auth (correo/contraseña o Google), recuperación y actualización de contraseñas.
 - Cursos iniciales de 1.º, 2.º y 3.º año, divisiones A, B y C, turno mañana; alta de nuevas divisiones y turnos.
 - Alta, consulta, modificación, búsqueda y baja lógica de estudiantes. El DNI es único.
 - Registro diario por curso, fecha y jornada con estados P, A, T y AJ.
@@ -21,7 +21,7 @@ Sistema web de gestión de asistencia para 1.º, 2.º y 3.º año. Está desarro
 - Historial por curso, estudiante y período.
 - Resumen con porcentajes, comparativa por curso, estudiantes con más ausencias y exportación CSV.
 - Interfaz responsive para escritorio y celular.
-- API REST protegida por sesión y validación básica del lado del servidor.
+- API REST protegida mediante tokens verificados por Supabase Auth; aprobación de cuentas y gestión de roles.
 
 ## Requisitos
 
@@ -39,46 +39,70 @@ Sistema web de gestión de asistencia para 1.º, 2.º y 3.º año. Está desarro
    npm install
    ```
 
-2. En Windows PowerShell, desde la carpeta raíz del repositorio (la que contiene `package.json`), ejecutá `Copy-Item .env.example .env`. Abrí `.env` con un editor y completá la URI real de PostgreSQL. Asegurate de que el archivo se llame exactamente `.env`, no `.env.txt`.
-
-   Podés comprobar qué variables detecta la aplicación con `npm run env:check`. El comando no muestra ni imprime los secretos.
+2. Copiá `.env.example` a `.env` y completá:
 
    ```env
    NODE_ENV=development
    PORT=3000
-   DATABASE_URL=postgresql://usuario:password@host:5432/postgres
-   DB_SSL=false
-   SESSION_SECRET=una-clave-larga-y-aleatoria
+   DATABASE_URL=<URI PostgreSQL de Supabase>
+   DB_SSL=true
+   SUPABASE_URL=https://PROJECT_REF.supabase.co
+   SUPABASE_ANON_KEY=<clave pública anon o publishable>
    ```
 
-   Para PostgreSQL local, normalmente `DB_SSL=false`. Para Supabase, usá `DB_SSL=true`.
+3. Ejecutá `npm run db:init` y `npm start`. Si `SUPABASE_URL` está definida, también se aplica la migración de Supabase Auth. Abrí `http://localhost:3000`.
 
-3. Inicializá las tablas y los cursos de ejemplo, y arrancá la aplicación:
+4. Registrá tu primera cuenta desde la aplicación, confirmá el correo si Supabase lo solicita y seguí la sección **Primer administrador y aprobación**.
 
-   ```bash
-   npm run db:init
-   npm start
+## Cuentas, contraseñas y Google
+
+SixSeven utiliza **Supabase Auth** para las credenciales. Los usuarios se guardan en `auth.users`; el perfil de SixSeven se guarda en `public.usuarios`. Las contraseñas no se almacenan en la tabla propia. Supabase gestiona email/contraseña, Google, recuperación y actualización.
+
+### Variables necesarias
+
+Además de `DATABASE_URL`, configurá `SUPABASE_URL` y `SUPABASE_ANON_KEY` (la clave pública anon o publishable). Nunca uses `service_role` en el frontend.
+
+### Migración y perfiles
+
+Al iniciar, `npm start` ejecuta `npm run db:init`. Si encuentra `SUPABASE_URL`, aplica `database/supabase-auth.sql`, que vincula `public.usuarios.auth_user_id` con `auth.users.id`, crea automáticamente un perfil al registrarse y activa RLS en las tablas escolares para que no estén expuestas a la API pública de Supabase.
+
+### Primer administrador y aprobación
+
+Las cuentas nuevas quedan pendientes (`activo=false`) y con rol `docente`. Esto impide que cualquier visitante que se registre obtenga acceso inmediato a los datos escolares.
+
+1. Registrá una cuenta en SixSeven con correo/contraseña o Google.
+2. Confirmá el correo si Supabase lo solicita.
+3. En Supabase → SQL Editor ejecutá, reemplazando el correo:
+
+   ```sql
+   UPDATE public.usuarios
+   SET activo = TRUE, rol = 'administrador'
+   WHERE lower(email) = lower('TU_CORREO')
+   RETURNING id_usuario, email, rol, activo;
    ```
 
-   El comando `npm start` también comprueba/crea las tablas y los cursos al iniciar, de forma idempotente. Abrí `http://localhost:3000`.
+4. Volvé a iniciar sesión o pulsá **Volver a comprobar** en la pantalla de cuenta pendiente.
 
-4. Creá el primer administrador. En otra terminal, con la misma conexión a la base, definí temporalmente estas variables y ejecutá el script:
+Después, el administrador puede aprobar, desactivar y asignar roles desde **Usuarios**. No desactives ni quites el rol al último administrador activo.
 
-   **PowerShell**
-   ```powershell
-   $env:ADMIN_USER="admin"
-   $env:ADMIN_PASSWORD="elegir-una-clave-larga-y-unica"
-   npm run admin:create
-   Remove-Item Env:ADMIN_USER
-   Remove-Item Env:ADMIN_PASSWORD
-   ```
+### Configurar Google OAuth
 
-   **macOS / Linux**
-   ```bash
-   ADMIN_USER=admin ADMIN_PASSWORD='elegir-una-clave-larga-y-unica' npm run admin:create
-   ```
+1. En Google Cloud Console creá un OAuth Client ID de tipo **Web application**.
+2. En **Authorized JavaScript origins** agregá el dominio real de Render y `http://localhost:3000` para desarrollo.
+3. En **Authorized redirect URIs** agregá la callback exacta que muestra Supabase en **Authentication → Providers → Google**. Suele tener formato `https://PROJECT_REF.supabase.co/auth/v1/callback`; copiá la que aparece en tu panel.
+4. En Supabase → **Authentication → Providers → Google**, habilitá el proveedor y cargá el Client ID y Client Secret.
+5. En Supabase → **Authentication → URL Configuration**, configurá el Site URL con el dominio de Render y agregá como Redirect URLs el dominio de producción y `http://localhost:3000/**`.
+6. Guardá los cambios. El botón **Continuar con Google** ya invoca Supabase OAuth.
 
-   Cambiá el ejemplo por una contraseña segura. El sistema no trae un usuario ni contraseña predeterminados.
+El Client Secret de Google se guarda solamente en Supabase. No lo agregues al repositorio, frontend ni Render.
+
+### Recuperar o cambiar contraseña
+
+- **Olvidé mi contraseña** envía un correo de recuperación.
+- El enlace vuelve a `/?mode=recovery`, donde se define una contraseña nueva.
+- **Mi cuenta → Cambiar contraseña** actualiza la contraseña de la sesión actual.
+
+Asegurate de que los Redirect URLs coincidan con el dominio usado.
 
 ## Conectar Supabase
 
@@ -88,7 +112,7 @@ SixSeven usa PostgreSQL directamente desde el backend Node con el paquete `pg`. 
 2. En el panel del proyecto, abrí **Connect** y elegí **Session pooler**. Copiá la URI PostgreSQL que muestra Supabase. Para un backend persistente que podría ejecutarse sobre IPv4, el Session pooler es la opción compatible. No armes el host a mano: copiá host, usuario y puerto que muestra el panel.
 3. Reemplazá el marcador de contraseña en la URI. Si contiene caracteres especiales (por ejemplo `@`, `#`, `?` o espacios), codificalos para URL antes de pegarla.
 4. Pegá esa cadena completa como `DATABASE_URL` en tu `.env` local. Configurá `DB_SSL=true`.
-5. Ejecutá `npm run db:init`. El script crea las tablas `usuarios`, `cursos`, `estudiantes` y `asistencias`, además de los índices y los nueve cursos iniciales. Luego ejecutá `npm run admin:create` para crear tu cuenta de acceso.
+5. Ejecutá `npm run db:init`. El inicializador crea las tablas, los índices y los nueve cursos iniciales. Si `SUPABASE_URL` está configurada, también crea el trigger de perfiles Auth.
 
 **Importante:** la cadena de conexión es un secreto. No la pongas en `public/js/app.js`, HTML, capturas, commits ni mensajes públicos. El archivo `.env` ya está excluido por `.gitignore`.
 
@@ -124,24 +148,25 @@ En **Environment** del Web Service configurá:
 | `NODE_ENV` | `production` |
 | `DB_SSL` | `true` |
 | `DATABASE_URL` | URI PostgreSQL de Supabase (Session pooler) |
-| `SESSION_SECRET` | Una cadena aleatoria larga y privada |
+| `SUPABASE_URL` | URL del proyecto Supabase |
+| `SUPABASE_ANON_KEY` | Clave pública anon o publishable |
 
-En Render, el backend acepta `DATABASE_URL` (nombre recomendado) o `SUPABASE_DATABASE_URL` (alias usado por el workflow manual). Configurá al menos una de las dos en el **Environment del Web Service**. Si las guardaste en un Environment Group, asegurate de vincular ese grupo al servicio. Elegí **Save, rebuild, and deploy**; no uses **Save only**.
+Las variables `DATABASE_URL`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` deben estar en el **Environment del Web Service**. Si usás un Environment Group, vinculalo al servicio y elegí **Save, rebuild, and deploy**.
 
 Render proporciona `PORT` automáticamente; la aplicación lo lee desde `process.env.PORT`. Al iniciar, `npm start` prepara las tablas y luego inicia Express.
 
-Para crear el primer administrador, ejecutá `npm run admin:create` una sola vez desde una terminal local con la misma conexión a la base y las variables de administrador definidas temporalmente. No configures esas dos variables de forma permanente en Render.
+Para habilitar el primer administrador, registrá una cuenta y ejecutá el UPDATE indicado en la sección **Primer administrador y aprobación**.
 
 ## Rutas principales de la API
 
-Todas las rutas, excepto autenticación y salud, requieren sesión iniciada.
+Todas las rutas de gestión requieren bearer token válido de Supabase Auth y un perfil aprobado.
 
 | Método | Ruta | Uso |
 | --- | --- | --- |
 | GET | `/api/health` | Estado del servidor y PostgreSQL |
-| POST | `/api/auth/login` | Iniciar sesión |
-| GET | `/api/auth/me` | Usuario de la sesión |
-| POST | `/api/auth/logout` | Cerrar sesión |
+| GET | `/api/auth/config` | Configuración pública de Supabase |
+| GET | `/api/auth/me` | Usuario autenticado |
+| GET / PATCH | `/api/auth/users` | Listar y modificar cuentas (admin) |
 | GET / POST | `/api/courses` | Consultar y crear cursos |
 | GET / POST | `/api/students` | Consultar y registrar estudiantes |
 | PUT / DELETE | `/api/students/:id` | Modificar o dar de baja |
