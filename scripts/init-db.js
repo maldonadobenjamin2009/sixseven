@@ -1,11 +1,12 @@
-require("dotenv").config();
 const fs = require("node:fs");
 const path = require("node:path");
+const dotenv = require("dotenv");
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const pool = require("../src/config/db");
 
 async function main() {
-  const schemaPath = path.join(__dirname, "..", "database", "schema.sql");
-  const schema = fs.readFileSync(schemaPath, "utf8");
+  const root = path.join(__dirname, "..");
+  const schema = fs.readFileSync(path.join(root, "database", "schema.sql"), "utf8");
   await pool.query(schema);
 
   for (let year = 1; year <= 3; year += 1) {
@@ -17,7 +18,14 @@ async function main() {
     }
   }
 
-  console.log("Base de datos lista. Se verificaron las tablas y los cursos iniciales.");
+  if (process.env.SUPABASE_URL) {
+    const authSchema = fs.readFileSync(path.join(root, "database", "supabase-auth.sql"), "utf8");
+    await pool.query(authSchema);
+    console.log("Supabase Auth: perfiles, trigger y RLS verificados.");
+  } else {
+    console.log("SUPABASE_URL no definido: se omitió la migración específica de Supabase Auth.");
+  }
+  console.log("Base de datos lista.");
 }
 
 main()
